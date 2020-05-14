@@ -6,3 +6,4 @@ api/.elasticbeanstalk/config.yml
 venv/*
 ../.idea/
 ../__pycache__/
+/pic
