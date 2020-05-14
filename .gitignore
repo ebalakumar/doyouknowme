@@ -3,3 +3,6 @@
 api/.elasticbeanstalk/config.yml
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
+venv/*
+../.idea/
+../__pycache__/
