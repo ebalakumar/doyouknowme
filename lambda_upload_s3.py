@@ -17,12 +17,11 @@ def lambda_handler(event, context):
     try:
         if event['operation'] == "upload":
             if verify_secret_key(event["secret_code"]):
-                # response = upload_image(event)
-                response = get_images(event["user_id"])
+                response = upload_image(event)
             else:
                 return "invalid secret code"  # todo: return proper error type
         elif event['operation'] == "verify":
-            image_verification(event)
+            response = image_verification(event)
 
         return response
 
@@ -68,7 +67,7 @@ def upload_image(event):
 
 def add_update_user_details(image_id, event):
     dynamodb = boto3.resource('dynamodb',
-                              endpoint_url='http://localhost:32769')  # todo: difference between boto3.resource and boto3.client
+                              endpoint_url='http://localhost:32768')  # todo: difference between boto3.resource and boto3.client
     timestamp = str(time.time())
     table = dynamodb.Table(os.environ['DYNAMODB_TABLE'])
     item = {
@@ -90,38 +89,47 @@ def add_update_user_details(image_id, event):
 def image_verification(event):
     client = boto3.client('rekognition')
     bucket_name = os.environ['S3_BUCKET']
+    # with open('pic/user_2_input_1.jpg', 'rb') as source_image:
+    #     source_bytes = source_image.read()
+    #
+    # with open('pic/user_2_input_2.jpeg', 'rb') as target_image:
+    #     target_bytes = target_image.read()
+
     response = client.compare_faces(
         SourceImage={
-            'Bytes': b'bytes',
-            'S3Object': {
-                'Bucket': 'string',
-                'Name': 'string',
-                'Version': 'string'
-            }
+            'Bytes': base64.b64decode(event["image_data"])
+            # 'Bytes': source_bytes
+            # 'S3Object': {
+            #     'Bucket': bucket_name,
+            #     'Name': 'f8fe8858-832b-4bf4-a3c6-288fabb4c4c8_5744a961-278d-4242-bec7-1fe0f28f3518.jpeg',
+            # }
         },
         TargetImage={
-            'Bytes': b'bytes',
+            # 'Bytes': base64.b64decode(event["image_data_1"])
+            # 'Bytes': target_bytes
             'S3Object': {
-                'Bucket': 'string',
-                'Name': 'string',
-                'Version': 'string'
+                'Bucket': bucket_name,
+                'Name': 'dbc76962-ae9d-41d4-90bd-89a0141c8c76_ba7fbc55-2186-40da-9bd6-ec96b03b08e4.jpeg',
             }
         },
-        SimilarityThreshold=...,
-        QualityFilter='NONE' | 'AUTO' | 'LOW' | 'MEDIUM' | 'HIGH'
+        SimilarityThreshold=90
     )
+    return response
 
 
 def get_images(user_id):
     # client = boto3.client('dynamodb')
     table = os.environ['DYNAMODB_TABLE']
-    client = boto3.client('dynamodb', endpoint_url='http://localhost:32769')
-    response = client.get_item(
-        Key={
-            'UserId': {
-                'S': user_id
+    client = boto3.client('dynamodb', endpoint_url='http://localhost:32768')
+    response = client.query(
+        TableName=table,
+        IndexName='UserId-index',
+        ProjectionExpression='ImageId',
+        KeyConditionExpression='UserId = :v1',
+        ExpressionAttributeValues={
+            ':v1': {
+                'S': user_id,
             }
-        },
-        TableName=table
+        }
     )
-    return response
+    return response["Items"]
