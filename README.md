@@ -35,7 +35,7 @@ aws dynamodb create-table \
     --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 --endpoint-url http://localhost:32768 \
     --global-secondary-indexes file://gsi.json
 
- aws dynamodb delete-table --table-name ImageDetails --endpoint-url http://localhost:32769
+ aws dynamodb delete-table --table-name ImageDetails --endpoint-url http://localhost:32768
 
 -----
 

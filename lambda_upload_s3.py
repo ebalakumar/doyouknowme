@@ -17,7 +17,7 @@ def lambda_handler(event, context):
     try:
         if event['operation'] == "upload":
             if verify_secret_key(event["secret_code"]):
-                response = upload_image(event)
+                response = add_update_user_details(event)
             else:
                 return "invalid secret code"  # todo: return proper error type
         elif event['operation'] == "verify":
@@ -46,26 +46,27 @@ def verify_secret_key(secret_key) -> bool:
     return True
 
 
-def upload_image(event):
-    s3 = boto3.client('s3')
-    image_data = base64.b64decode(event['image_data'])
+# def upload_image(event):
+#     s3 = boto3.client('s3')
+#     image_data = base64.b64decode(event['image_data'])
+#     image_id = event['user_id'] + "_" + str(uuid.uuid4())
+#     bucket_name = os.environ['S3_BUCKET']
+#     response = s3.put_object(
+#         # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.put_object
+#         Body=image_data,
+#         Bucket=bucket_name,
+#         Key=image_id + '.jpeg',
+#         ContentType='image/jpeg'
+#     )
+#     if (response["ResponseMetadata"])["HTTPStatusCode"] == 200:
+#         print("Successfully uploaded image to S3")
+#         return add_update_user_details(image_id, event)
+#     else:
+#         return Exception("Image upload to S3 failed")
+
+
+def add_update_user_details(event):
     image_id = event['user_id'] + "_" + str(uuid.uuid4())
-    bucket_name = os.environ['S3_BUCKET']
-    response = s3.put_object(
-        # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.put_object
-        Body=image_data,
-        Bucket=bucket_name,
-        Key=image_id + '.jpeg',
-        ContentType='image/jpeg'
-    )
-    if (response["ResponseMetadata"])["HTTPStatusCode"] == 200:
-        print("Successfully uploaded image to S3")
-        return add_update_user_details(image_id, event)
-    else:
-        return Exception("Image upload to S3 failed")
-
-
-def add_update_user_details(image_id, event):
     dynamodb = boto3.resource('dynamodb',
                               endpoint_url='http://localhost:32768')  # todo: difference between boto3.resource and boto3.client
     timestamp = str(time.time())
@@ -73,6 +74,7 @@ def add_update_user_details(image_id, event):
     item = {
         'UserId': event['user_id'],
         'ImageId': image_id,
+        'ImageData': event['image_data'],
         'CreatedAt': timestamp,  # todo: set UTC timestamp
         'UpdatedAt': timestamp,
     }
@@ -88,33 +90,32 @@ def add_update_user_details(image_id, event):
 
 def image_verification(event):
     client = boto3.client('rekognition')
-    bucket_name = os.environ['S3_BUCKET']
-    # with open('pic/user_2_input_1.jpg', 'rb') as source_image:
-    #     source_bytes = source_image.read()
-    #
-    # with open('pic/user_2_input_2.jpeg', 'rb') as target_image:
-    #     target_bytes = target_image.read()
+    existing_images = get_images(event["user_id"])  # todo: condition if get_image is empty
+    print("EXISTING IMAGES OBJ", existing_images)
+    responses = []
+    for img in existing_images:
+        response = client.compare_faces(
+            SourceImage={
+                'Bytes': base64.b64decode(event["image_data"])
+            },
+            TargetImage={
+                'Bytes': base64.b64decode(img['ImageData']['S'])
+            },
+            SimilarityThreshold=90
+        )["FaceMatches"]
 
-    response = client.compare_faces(
-        SourceImage={
-            'Bytes': base64.b64decode(event["image_data"])
-            # 'Bytes': source_bytes
-            # 'S3Object': {
-            #     'Bucket': bucket_name,
-            #     'Name': 'f8fe8858-832b-4bf4-a3c6-288fabb4c4c8_5744a961-278d-4242-bec7-1fe0f28f3518.jpeg',
-            # }
-        },
-        TargetImage={
-            # 'Bytes': base64.b64decode(event["image_data_1"])
-            # 'Bytes': target_bytes
-            'S3Object': {
-                'Bucket': bucket_name,
-                'Name': 'dbc76962-ae9d-41d4-90bd-89a0141c8c76_ba7fbc55-2186-40da-9bd6-ec96b03b08e4.jpeg',
-            }
-        },
-        SimilarityThreshold=90
-    )
-    return response
+        print("breakpoint", response)
+        if not response:
+            message = "This Image is not part of your existing collection"
+        else:
+            message = "Face detected in image and its " + str(response[0]['Similarity']) + " match"
+
+        responses.append({
+            "image_data": img['ImageData']['S'],
+            "message": message
+        })
+
+    return responses
 
 
 def get_images(user_id):
@@ -124,7 +125,7 @@ def get_images(user_id):
     response = client.query(
         TableName=table,
         IndexName='UserId-index',
-        ProjectionExpression='ImageId',
+        ProjectionExpression='ImageData',
         KeyConditionExpression='UserId = :v1',
         ExpressionAttributeValues={
             ':v1': {
