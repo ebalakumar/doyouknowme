@@ -46,3 +46,15 @@ aws dynamodb query \
     --key-condition-expression "UserId = :v1" \
     --expression-attribute-values file://expression-attributes.json \
     --endpoint-url http://localhost:32768
+
+
+
+# Creating Dynamodb table
+`
+aws --region ap-south-1 dynamodb create-table \
+    --table-name ImageDetails \
+    --attribute-definitions AttributeName=ImageId,AttributeType=S AttributeName=UserId,AttributeType=S \
+    --key-schema AttributeName=ImageId,KeyType=HASH AttributeName=UserId,KeyType=RANGE  \
+    --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
+    --global-secondary-indexes file://local-setup/gsi.json
+`
