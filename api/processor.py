@@ -24,25 +24,6 @@ def verify_secret_key(secret_key) -> bool:
     return True
 
 
-# def upload_image(event):
-#     s3 = boto3.client('s3')
-#     image_data = base64.b64decode(event['image_data'])
-#     image_id = event['user_id'] + "_" + str(uuid.uuid4())
-#     bucket_name = os.environ['S3_BUCKET']
-#     response = s3.put_object(
-#         # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.put_object
-#         Body=image_data,
-#         Bucket=bucket_name,
-#         Key=image_id + '.jpeg',
-#         ContentType='image/jpeg'
-#     )
-#     if (response["ResponseMetadata"])["HTTPStatusCode"] == 200:
-#         print("Successfully uploaded image to S3")
-#         return add_update_user_details(image_id, event)
-#     else:
-#         return Exception("Image upload to S3 failed")
-
-
 def add_update_user_details(event):
     image_id = event['user_id'] + "_" + str(uuid.uuid4())
     dynamodb = boto3.resource('dynamodb',
