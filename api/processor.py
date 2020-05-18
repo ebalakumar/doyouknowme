@@ -8,20 +8,13 @@ import os
 def lambda_handler(event, context):
     try:
         if event['operation'] == "upload":
-            if verify_secret_key(event["secret_code"]):
-                response = add_update_user_details(event)
-            else:
-                return "invalid secret code"  # todo: return proper error type
+            response = add_update_user_details(event)
         elif event['operation'] == "verify":
             response = image_verification(event)
         return response
     except Exception as e:
         print(e)
         raise e
-
-
-def verify_secret_key(secret_key) -> bool:
-    return True
 
 
 def add_update_user_details(event):
@@ -51,27 +44,31 @@ def image_verification(event):
     client = boto3.client('rekognition')
     existing_images = get_images(event["user_id"])  # todo: condition if get_image is empty
     # print("EXISTING IMAGES OBJ", existing_images)
-    responses = []
-    for img in existing_images:
-        response = client.compare_faces(
-            SourceImage={
-                'Bytes': base64.b64decode(event["image_data"])
-            },
-            TargetImage={
-                'Bytes': base64.b64decode(img['ImageData']['S'])
-            },
-            SimilarityThreshold=90
-        )["FaceMatches"]
-        # print("breakpoint", response)
-        if not response:
-            message = "This Image is not part of your existing collection"
-        else:
-            message = "Face detected in image and its a " + str(round(int(response[0]['Similarity']), 2)) + "% match"
-        responses.append({
-            "image_data": img['ImageData']['S'],
-            "message": message
-        })
-    return responses
+    if not existing_images:
+        return "No images present for this user"
+    else:
+        responses = []
+        for img in existing_images:
+            response = client.compare_faces(
+                SourceImage={
+                    'Bytes': base64.b64decode(event["image_data"])
+                },
+                TargetImage={
+                    'Bytes': base64.b64decode(img['ImageData']['S'])
+                },
+                SimilarityThreshold=90
+            )["FaceMatches"]
+            # print("breakpoint", response)
+            if not response:
+                message = "This Image is not part of your existing collection"
+            else:
+                message = "Face detected in image and its a " + str(
+                    round(int(response[0]['Similarity']), 2)) + "% match"
+            responses.append({
+                "image_data": img['ImageData']['S'],
+                "message": message
+            })
+        return responses
 
 
 def get_images(user_id):
