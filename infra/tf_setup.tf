@@ -1,3 +1,11 @@
+variable "access_key" {
+  type = string
+}
+
+variable "secret_key" {
+  type = string
+}
+
 provider "aws" {
   version = "~> 2.0"
   access_key = var.access_key
