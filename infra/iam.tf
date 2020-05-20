@@ -20,7 +20,7 @@ resource "aws_iam_policy" "processor_access_imagedetails" {
                 "dynamodb:UpdateItem"
             ],
             "Resource": [
-                ${aws_dynamodb_table.image_details.arn},
+                "${aws_dynamodb_table.image_details.arn}",
                 "${aws_dynamodb_table.image_details.arn}/index/UserId-index"
             ]
         },
