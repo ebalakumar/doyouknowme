@@ -22,9 +22,7 @@ resource "aws_dynamodb_table" "image_details" {
     //    range_key          = "TopScore"
     write_capacity = 5
     read_capacity = 5
-    projection_type = "INCLUDE"
-    non_key_attributes = [
-      "UserId"]
+    projection_type = "KEYS_ONLY"
   }
 
   //  tags = {
