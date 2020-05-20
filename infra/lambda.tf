@@ -20,6 +20,7 @@ resource "aws_lambda_function" "processor_lambda" {
   source_code_hash = filebase64sha256("../${path.module}/api/processor.zip")
 
   runtime = "python3.7"
+  timeout = "20s"
 
   environment {
     variables = {
