@@ -18,11 +18,13 @@ resource "aws_dynamodb_table" "image_details" {
 
   global_secondary_index {
     name = "UserId-index"
-    hash_key = "ImageId"
+    hash_key = "UserId"
     //    range_key          = "TopScore"
     write_capacity = 5
     read_capacity = 5
-    projection_type = "ALL"
+    projection_type = "INCLUDE"
+    non_key_attributes = [
+      "ImageData"]
   }
 
   //  tags = {
