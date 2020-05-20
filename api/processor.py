@@ -64,7 +64,7 @@ def image_verification(event):
             if not response:
                 message = "This Image is not part of your existing collection"
             else:
-                message = "Face detected in image and its a " + str(
+                message = "WOW!! Face detected in image and its a " + str(
                     round(int(response[0]['Similarity']), 2)) + "% match"
             responses.append({
                 "image_data": img['ImageData']['S'],
