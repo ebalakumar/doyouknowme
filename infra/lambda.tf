@@ -1,7 +1,7 @@
 data "archive_file" "processor_artifact" {
   type = "zip"
-  source_file = "${path.module}/api/processor.py"
-  output_path = "${path.module}/api/processor.zip"
+  source_file = "../${path.module}/api/processor.py"
+  output_path = "../${path.module}/api/processor.zip"
 }
 
 resource "aws_lambda_function" "processor_lambda" {
