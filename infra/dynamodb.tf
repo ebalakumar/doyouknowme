@@ -16,11 +16,6 @@ resource "aws_dynamodb_table" "image_details" {
     type = "S"
   }
 
-  attribute {
-    name = "ImageData"
-    type = "B"
-  }
-
   global_secondary_index {
     name = "UserId-index"
     hash_key = "ImageId"
@@ -29,9 +24,7 @@ resource "aws_dynamodb_table" "image_details" {
     read_capacity = 5
     projection_type = "INCLUDE"
     non_key_attributes = [
-      "UserId",
-      "ImageId",
-      "ImageData"]
+      "UserId"]
   }
 
   //  tags = {
