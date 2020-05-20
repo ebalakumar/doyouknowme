@@ -30,10 +30,10 @@ aws dynamodb scan --table-name ImageDetails --endpoint-url http://localhost:3276
 ---
 aws dynamodb create-table \
     --table-name ImageDetails \
-    --attribute-definitions AttributeName=ImageId,AttributeType=S AttributeName=UserId,AttributeType=S \
+    --attribute-definitions AttributeName=ImageId,AttributeType=S AttributeName=UserId,AttributeType=S AttributeName=ImageData,AttributeType=B \
     --key-schema AttributeName=ImageId,KeyType=HASH AttributeName=UserId,KeyType=RANGE  \
     --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 --endpoint-url http://localhost:32768 \
-    --global-secondary-indexes file://gsi.json
+    --global-secondary-indexes file://local-setup/gsi.json
 
  aws dynamodb delete-table --table-name ImageDetails --endpoint-url http://localhost:32768
 

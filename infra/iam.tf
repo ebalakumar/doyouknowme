@@ -1,8 +1,9 @@
-resource "aws_iam_policy" "processor_access_ImageDetails" {
+resource "aws_iam_policy" "processor_access_imagedetails" {
   name = "processor_access_ImageDetails"
   path = "/"
   description = "Allowing Processor to access ImageDetails table"
 
+  //  todo: Index name should not be hardcoded
   policy = <<EOF
 {
     "Version": "2012-10-17",
@@ -19,8 +20,8 @@ resource "aws_iam_policy" "processor_access_ImageDetails" {
                 "dynamodb:UpdateItem"
             ],
             "Resource": [
-                "arn:aws:dynamodb:ap-south-1:818087033500:table/ImageDetails",
-                "arn:aws:dynamodb:ap-south-1:818087033500:table/ImageDetails/index/UserId-index"
+                ${aws_dynamodb_table.image_details.arn},
+                "${aws_dynamodb_table.image_details.arn}/index/UserId-index"
             ]
         },
         {
@@ -82,30 +83,10 @@ EOF
 
 resource "aws_iam_role_policy_attachment" "processor_imagedetails_role_attachment" {
   role = aws_iam_role.iam_for_lambda.name
-  policy_arn = aws_iam_policy.processor_access_ImageDetails.arn
+  policy_arn = aws_iam_policy.processor_access_imagedetails.arn
 }
 
 resource "aws_iam_role_policy_attachment" "processor_aws_rekon_role_attachment" {
   role = aws_iam_role.iam_for_lambda.name
   policy_arn = aws_iam_policy.processor_use_aws_rekon.arn
 }
-
-//resource "aws_lambda_function" "processor_lambda" {
-//  filename = "processor.zip"
-//  function_name = "lambda_function_name"
-//  role = aws_iam_role.iam_for_lambda.arn
-//  handler = "exports.test"
-//
-//  # The filebase64sha256() function is available in Terraform 0.11.12 and later
-//  # For Terraform 0.11.11 and earlier, use the base64sha256() function and the file() function:
-//  # source_code_hash = "${base64sha256(file("lambda_function_payload.zip"))}"
-//  source_code_hash = filebase64sha256("processor.zip")
-//
-//  runtime = "python3.7"
-//
-//  environment {
-//    variables = {
-//      foo = "bar"
-//    }
-//  }
-//}

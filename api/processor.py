@@ -29,7 +29,7 @@ def add_update_user_details(event):
     item = {
         'UserId': event['user_id'],
         'ImageId': image_id,
-        'ImageData': event['image_data'],
+        'ImageData': event['image_data'],  # todo: understand blob datatype
         'CreatedAt': timestamp,  # todo: set UTC timestamp
         'UpdatedAt': timestamp,
     }
@@ -75,13 +75,14 @@ def image_verification(event):
 
 def get_images(user_id):
     table = os.environ['DYNAMODB_TABLE']
+    table_index = os.environ['DYNAMODB_TABLE_INDEX']
     if os.environ['PROCESSOR_ENV'] == "local":
         client = boto3.client('dynamodb', endpoint_url='http://localhost:32768')
     else:
         client = boto3.client('dynamodb')
     response = client.query(
         TableName=table,
-        IndexName='UserId-index',
+        IndexName=table_index,
         ProjectionExpression='ImageData',
         KeyConditionExpression='UserId = :v1',
         ExpressionAttributeValues={
